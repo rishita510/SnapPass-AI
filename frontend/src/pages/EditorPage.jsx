@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PhotoPreview from '../components/PhotoPreview';
 import BackgroundSelector from '../components/BackgroundSelector';
@@ -7,27 +7,53 @@ import { ButtonSpinner } from '../components/LoadingSpinner';
 import './EditorPage.css';
 import EmptyState from '../components/EmptyState';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
+import { translations } from '../translations/translations';
+import useImageProcessor from '../hooks/useImageProcessor';
+import { saveSession, getSession } from '../utils/sessionManager';
 
 /**
  * EditorPage — Step 2.
  * Shows preview of uploaded photo, lets user configure background + size,
  * then triggers AI processing before navigating to PrintPreviewPage.
  */
-function EditorPage({darkMode, toggleTheme}) {
+function EditorPage({ darkMode, toggleTheme }) {
+  const { language } = useLanguage();
+  const t = translations[language];
   const { state } = useLocation();
   const navigate = useNavigate();
+  const savedSession = getSession();
 
   const [photoData, setPhotoData] = useState({
-    localUrl: state?.localUrl,
-    filename: state?.filename,
-    fileSize: state?.fileSize,
+    localUrl: state?.localUrl || savedSession?.localUrl,
+    filename: state?.filename || savedSession?.filename,
+    fileSize: state?.fileSize || savedSession?.fileSize,
   });
 
   const fileInputRef = useRef(null);
 
-  const [background, setBackground] = useState('white');
-  const [sizePreset, setSizePreset] = useState('35x45');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [background, setBackground] = useState(
+    savedSession?.background || 'white'
+  );
+  const [sizePreset, setSizePreset] = useState(
+    savedSession?.sizePreset || '35x45'
+  );
+  const { processImage, isProcessing, error } = useImageProcessor();
+
+  useEffect(() => {
+    if (!photoData?.localUrl) return;
+
+    const sessionData = {
+      step: 'editor',
+      localUrl: photoData.localUrl,
+      filename: photoData.filename,
+      fileSize: photoData.fileSize,
+      background,
+      sizePreset,
+    };
+
+    saveSession(sessionData);
+  }, [photoData, background, sizePreset]);
 
   const iconMap = {
     refresh: (
@@ -59,157 +85,203 @@ function EditorPage({darkMode, toggleTheme}) {
     });
   };
 
-
   const handleProcess = async () => {
-    setIsProcessing(true);
-
-    // TODO: Call backend POST /api/process with { filename, backgroundColour, photoSizePreset }
-    // const res = await fetch('/api/process', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ filename: state.filename, backgroundColour: background, photoSizePreset: sizePreset }),
-    // });
-    // const blob = await res.blob();
-    // const processedUrl = URL.createObjectURL(blob);
-
-    // Simulate processing delay
-    await new Promise((r) => setTimeout(r, 1500));
-
-    setIsProcessing(false);
-
-    // Navigate to print preview — pass original url as placeholder for processed for now
-    navigate('/print-preview', {
-      state: {
-        processedUrl: photoData.localUrl, // replace with real processedUrl after backend integration
+    try {
+      const processedUrl = await processImage({
         filename: photoData.filename,
-        background,
-        sizePreset,
-      },
-    });
+        backgroundColour: background,
+        photoSizePreset: sizePreset,
+      });
+
+      navigate('/print-preview', {
+        state: {
+          processedUrl,
+          filename: photoData.filename,
+          background,
+          sizePreset,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
   // If user lands here directly without uploading, redirect
 
-  if (!state?.localUrl) {
+  if (!photoData?.localUrl) {
     return (
       <EmptyState
-        title="No photo selected yet"
-        description="Please upload a passport photo before accessing the editor."
-        buttonText="Go to Upload"
+        title={t.noPhotoSelected}
+        description={t.uploadBeforeEditor}
+        buttonText={t.goToUpload}
         darkMode={darkMode}
         toggleTheme={toggleTheme}
       />
     );
   }
 
-
   const fadeUpVariant = {
     hidden: { opacity: 0, y: 30 },
     visible: (delay = 0) => ({
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut", delay }
-    })
+      transition: { duration: 0.8, ease: 'easeOut', delay },
+    }),
   };
 
   return (
-    <div className={`editor-toggle ${darkMode? "editor-toggle-dark": "" }`}> 
-    <div className="editor-page">
-      <motion.div
-        className="editor-page__header"
-        variants={fadeUpVariant}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        custom={0.1} // Loads first
-      >
-        <h1 className={`section-title ${darkMode? "section-title-dark": "section-title-light"}`}>Edit Your Photo</h1>
-        <p className={`section-subtitle ${darkMode? "section-subtitle-dark": "section-subtitle-light"}`}>Choose a background and size, then let AI process your photo.</p>
-      </motion.div>
-
-      <div className="editor-page__layout">
-        {/* Preview panel */}
-        <motion.section
-          className="editor-page__preview"
-          aria-label="Photo preview"
+    <div className={`editor-toggle ${darkMode ? 'editor-toggle-dark' : ''}`}>
+      <div className="editor-page">
+        <motion.div
+          className="editor-page__header"
           variants={fadeUpVariant}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          custom={0.2} // Loads second
+          custom={0.1} // Loads first
         >
-          <PhotoPreview
-            originalUrl={photoData.localUrl}
-            processedUrl={null}
-            isProcessing={isProcessing}
-          />
-        </motion.section>
-
-        {/* Controls panel */}
-        <motion.aside
-          className="editor-page__controls card"
-          aria-label="Photo settings"
-          variants={fadeUpVariant}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          custom={0.3} // Loads third
-        >
-          <BackgroundSelector selected={background} onChange={setBackground} />
-          <hr className="divider" />
-          <SizeSelector selected={sizePreset} onChange={setSizePreset} />
-          <hr className="divider" />
-
-          <div className="editor-page__info">
-            <p className="editor-info-row">
-              <span className="editor-info-label">File</span>
-              <span className="editor-info-value">{photoData.filename}</span>
-            </p>
-            <p className="editor-info-row">
-              <span className="editor-info-label">Size</span>
-              <span className="editor-info-value">{(photoData.fileSize / 1024).toFixed(1)} KB</span>
-            </p>
-          </div>
-
-          {/* Hidden file input works exactly as before */}
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp"
-            ref={fileInputRef}
-            onChange={handleReplacePhoto}
-            style={{ display: 'none' }}
-          />
-
-          <button
-            className="btn editor-page__replace-btn"
-            onClick={() => fileInputRef.current.click()}
+          <h1
+            className={`section-title ${darkMode ? 'section-title-dark' : 'section-title-light'}`}
           >
-            <span className="editor-page__btn-icon" aria-hidden="true">
-              {iconMap.refresh}
-            </span>
-            Replace Photo
-          </button>
-
-          <button
-            className={`btn btn-primary editor-page__process-btn ${darkMode ? "editor-page__process-btn-dark" : ""}`}
-            onClick={handleProcess}
-            disabled={isProcessing}
+            {t.editPhotoTitle}
+          </h1>
+          <p
+            className={`section-subtitle ${darkMode ? 'section-subtitle-dark' : 'section-subtitle-light'}`}
           >
-            {isProcessing ? (
-              <>
-                <ButtonSpinner /> Processing…
-              </>
-            ) : (
-              <>
-                <span className="editor-page__btn-icon" aria-hidden="true">
-                  {iconMap.spark}
-                </span>
-                Process with AI →
-              </>
+            {t.editPhotoSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="editor-page__layout">
+          {/* Preview panel */}
+
+          <motion.section
+            className="editor-page__preview"
+            aria-label="Photo preview"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0.2}
+          >
+            <PhotoPreview
+              originalUrl={photoData.localUrl}
+              processedUrl={null}
+              isProcessing={isProcessing}
+            />
+          </motion.section>
+
+          {/* Controls panel */}
+          <motion.aside
+            className="editor-page__controls card"
+            aria-label="Photo settings"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0.3}
+          >
+            <BackgroundSelector
+              selected={background}
+              onChange={setBackground}
+            />
+
+            <hr className="divider" />
+
+            <SizeSelector selected={sizePreset} onChange={setSizePreset} />
+
+            <hr className="divider" />
+
+            {error && (
+              <div
+                className="editor-page__error"
+                style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fca5a5',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  margin: '1rem 0',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: '6px', fontSize: '0.875rem' }}>
+                  {error.message || error}
+                </p>
+                {error.user_hint && (
+                  <p style={{ color: '#6b7280', fontSize: '0.8rem', marginBottom: '12px' }}>
+                    💡 {error.user_hint}
+                  </p>
+                )}
+                <button
+                  onClick={() => navigate('/upload')}
+                  style={{
+                    background: '#ef4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 20px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Try Again
+                </button>
+              </div>
             )}
-          </button>
-        </motion.aside>
+
+            <div className="editor-page__info">
+              <p className="editor-info-row">
+                <span className="editor-info-label">{t.fileLabel}</span>
+                <span className="editor-info-value">{photoData.filename}</span>
+              </p>
+              <p className="editor-info-row">
+                <span className="editor-info-label">{t.sizeLabel}</span>
+                <span className="editor-info-value">
+                  {(photoData.fileSize / 1024).toFixed(1)} KB
+                </span>
+              </p>
+            </div>
+
+            {/* Hidden file input works exactly as before */}
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              ref={fileInputRef}
+              onChange={handleReplacePhoto}
+              style={{ display: 'none' }}
+            />
+
+            <button
+              className="btn editor-page__replace-btn"
+              onClick={() => fileInputRef.current.click()}
+            >
+              <span className="editor-page__btn-icon" aria-hidden="true">
+                {iconMap.refresh}
+              </span>
+              {t.replacePhoto}
+            </button>
+
+            <button
+              className={`btn btn-primary editor-page__process-btn ${darkMode ? 'editor-page__process-btn-dark' : ''}`}
+              onClick={handleProcess}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <ButtonSpinner /> {t.processingPhoto}
+                </>
+              ) : (
+                <>
+                  <span className="editor-page__btn-icon" aria-hidden="true">
+                    {iconMap.spark}
+                  </span>
+                  {t.processWithAI}
+                </>
+              )}
+            </button>
+          </motion.aside>
+        </div>
       </div>
-    </div>
     </div>
   );
 }

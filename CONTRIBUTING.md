@@ -188,7 +188,7 @@ Browser (React Frontend)
     │
     │  HTTP (fetch / axios) via port 3000
     ▼
-Express Backend (Node.js) ← runs on port 5000
+Express Backend (Node.js) ← runs on port 3000
     │
     │  HTTP (axios) forwarding images/data
     ▼
@@ -197,11 +197,11 @@ Python AI Service (Flask) ← runs on port 8000
 
 ### Frontend (`frontend/`)
 Built with **React.js** and plain **CSS** (We strictly do **not** use Tailwind or CSS-in-JS to keep styling vanilla and accessible).
-- Each component lives in its own `.js` + `.css` pair.
+- Each component lives in its own `.jsx` + `.css` pair.
 - State is managed with standard React hooks (`useState`, `useEffect`, `useCallback`).
 - Custom hooks live in `src/hooks/`.
-- All API calls are centralized and funnel through `src/services/photoService.js`.
-- Routing is handled by `react-router-dom` in `src/routes/AppRoutes.js`.
+- All API calls are centralized and funnel through `src/services/photoService.jsx`.
+- Routing is handled by `react-router-dom` in `src/routes/AppRoutes.jsx`.
 
 ### Backend (`backend/`)
 Built with **Node.js + Express**.
@@ -257,7 +257,7 @@ Open a new terminal window:
 cd backend
 npm install
 npm run dev 
-# The server will start and listen on http://localhost:5000
+# The server will start and listen on http://localhost:3000
 ```
 
 ### Step 4 — Run the Python AI Service (Required for Python/AI Tasks)

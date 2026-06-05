@@ -1,79 +1,92 @@
-import React from "react";
-import "./HomePage.css";
-import { motion } from "framer-motion";
+import React from 'react';
+import './HomePage.css';
+import { motion } from 'framer-motion';
 
-import { Upload, Sparkles, Settings2, Download } from "lucide-react";
-import HeroSection from "../components/HomePage/HeroSection";
-import AIShowcaseSection from "../components/HomePage/AIShowcaseSection";
-import StepsSection from "../components/HomePage/StepsSection";
-import FeaturesSection from "../components/HomePage/FeaturesSection";
-import CTABanner from "../components/HomePage/CTABanner";
-import BackToTop from "../components/HomePage/BackToTop";
+import { Upload, Sparkles, Settings2, Download } from 'lucide-react';
+import HeroSection from '../components/HomePage/HeroSection';
+import AIShowcaseSection from '../components/HomePage/AIShowcaseSection';
+import StepsSection from '../components/HomePage/StepsSection';
+import FeaturesSection from '../components/HomePage/FeaturesSection';
+import CTABanner from '../components/HomePage/CTABanner';
+import BackToTop from '../components/HomePage/BackToTop';
+import TestimonialsSection from '../components/testimonials/TestimonialsSection';
 
-import { features, steps, chips, iconMap } from "../data/HomePageData";
+import { useLanguage } from '../context/LanguageContext';
+import { translations } from '../translations/translations';
+import SEOMetadata from '../components/layout/SEOMetadata';
 
 /**
  * HomePage — landing page with hero section and feature highlights.
  */
-function HomePage({darkMode, toggleTheme}) {
-  const features = [
+function HomePage({ darkMode, toggleTheme }) {
+  const { language } = useLanguage();
+  const t = translations[language];
+  const featureCards = [
     {
-      icon: "bg-remove",
-      title: "AI Background Removal",
-      desc: "Remove any background instantly with rembg — no manual selection needed.",
-      image: "/f-1.png",
-      tag: "AI Powered",
+      icon: 'bg-remove',
+      title: t.aiBackgroundRemoval,
+      desc: t.aiBackgroundRemovalDesc,
+      image: '/f-1.png',
+      tag: t.aiPowered,
     },
     {
-      icon: "face-center",
-      title: "Auto Face Centering",
-      desc: "OpenCV detects and centers your face to meet passport photo guidelines.",
-      image: "/f-2.png",
-      tag: "OpenCV",
+      icon: 'face-center',
+      title: t.autoFaceCentering,
+      desc: t.autoFaceCenteringDesc,
+      image: '/f-2.png',
+      tag: t.openCV,
     },
     {
-      icon: "sizes",
-      title: "Standard Size Presets",
-      desc: "India, USA, UK, Schengen and more — pick a preset and we handle the DPI.",
-      image: "/f-3.png",
-      tag: "Multiple Formats",
+      icon: 'sizes',
+      title: t.standardSizePresets,
+      desc: t.standardSizePresetsDesc,
+      image: '/f-3.png',
+      tag: t.multipleFormats,
     },
     {
-      icon: "print",
-      title: "A4 Print Layout",
-      desc: "Generate a printable A4 sheet with multiple photos — save on printing costs.",
-      image: "/f-4.png",
-      tag: "Print Ready",
+      icon: 'compare',
+      title: 'Passport Requirement Comparator',
+      desc: 'Compare passport and visa photo requirements across multiple countries before generating your photo.',
+      image: '/f-3.png',
+      tag: 'Compare Standards',
+      link: '/compare-requirements',
+    },
+    {
+      icon: 'print',
+      title: t.a4PrintLayout,
+      desc: t.a4PrintLayoutDesc,
+      image: '/f-4.png',
+      tag: t.printReady,
     },
   ];
 
   const steps = [
     {
-      label: "Upload your photo",
+      label: t.stepUpload,
       icon: <Upload size={22} />,
-      subtitle: "Choose a photo from your device",
+      subtitle: t.stepUploadSubtitle,
     },
     {
-      label: "AI processes & centers",
+      label: t.stepAIProcess,
       icon: <Sparkles size={22} />,
-      subtitle: "Advanced AI optimization for your photo",
+      subtitle: t.stepAIProcessSubtitle,
     },
     {
-      label: "Choose size & quantity",
+      label: t.stepChooseSize,
       icon: <Settings2 size={22} />,
-      subtitle: "Select your required photo format and copies",
+      subtitle: t.stepChooseSizeSubtitle,
     },
     {
-      label: "Download & print",
+      label: t.stepDownload,
       icon: <Download size={22} />,
-      subtitle: "Get a high-quality print-ready photo instantly",
+      subtitle: t.stepDownloadSubtitle,
     },
   ];
 
   const chips = [
-    { icon: "spark", label: "Background Removed" },
-    { icon: "target", label: "Auto Centered" },
-    { icon: "printer", label: "Print Ready" },
+    { icon: 'spark', label: t.backgroundRemoved },
+    { icon: 'target', label: t.autoCentered },
+    { icon: 'printer', label: t.printReady },
   ];
 
   const iconMap = {
@@ -97,14 +110,14 @@ function HomePage({darkMode, toggleTheme}) {
         <path d="M8.5 13.5h7" />
       </svg>
     ),
-    "bg-remove": (
+    'bg-remove': (
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <rect x="3" y="3" width="18" height="18" rx="4" />
         <path d="M7 14l3-3 3 3 4-5" />
         <path d="M8 8h3" />
       </svg>
     ),
-    "face-center": (
+    'face-center': (
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <rect x="4" y="4" width="16" height="16" rx="4" />
         <circle cx="12" cy="10" r="2" />
@@ -119,10 +132,18 @@ function HomePage({darkMode, toggleTheme}) {
         <path d="M7 9h2M7 12h2M15 11h2M15 14h2" />
       </svg>
     ),
+    compare: (
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 6h7v5H4z" />
+        <path d="M13 6h7v5h-7z" />
+        <path d="M4 13h7v5H4z" />
+        <path d="M13 13h7v5h-7z" />
+      </svg>
+    ),
     print: (
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M6 9V4h12v5" />
-        <rect x="4z" y="10" width="16" height="7" rx="2" />
+        <rect x="4" y="10" width="16" height="7" rx="2" />
         <path d="M7 17v3h10v-3" />
         <path d="M9 13h6" />
       </svg>
@@ -131,19 +152,38 @@ function HomePage({darkMode, toggleTheme}) {
 
   return (
     <div>
-      <HeroSection darkMode = {darkMode} toggleTheme={toggleTheme}/>
+      <SEOMetadata 
+        title="AI-Powered Passport Photo Studio" 
+        description="Generate professional, standard-compliant passport photos in seconds using AI background removal and face centering."
+      />
+      <HeroSection darkMode={darkMode} toggleTheme={toggleTheme} />
 
       {/* ── Showcase Section ── */}
-      <AIShowcaseSection darkMode = {darkMode} toggleTheme={toggleTheme} chips={chips} iconMap={iconMap} />
+      <AIShowcaseSection
+        darkMode={darkMode}
+        toggleTheme={toggleTheme}
+        chips={chips}
+        iconMap={iconMap}
+      />
 
       {/* ── How it Works ── */}
-      <StepsSection darkMode = {darkMode} toggleTheme={toggleTheme} steps={steps} />
+      <StepsSection
+        darkMode={darkMode}
+        toggleTheme={toggleTheme}
+        steps={steps}
+      />
 
       {/* ── Features ── */}
-      <FeaturesSection darkMode = {darkMode} toggleTheme={toggleTheme} features={features} iconMap={iconMap} />
+      <FeaturesSection
+        darkMode={darkMode}
+        toggleTheme={toggleTheme}
+        features={featureCards}
+        iconMap={iconMap}
+      />
 
       {/* ── CTA Banner ── */}
       <CTABanner />
+      <TestimonialsSection darkMode={darkMode} />
       <BackToTop />
     </div>
   );
