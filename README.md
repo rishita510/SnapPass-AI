@@ -375,7 +375,15 @@ New to open source? Look for issues tagged:
 - `documentation` — improve docs and comments
 
 ---
+## 👥 Contributors
 
+Thanks to everyone who has contributed to SnapPass AI! 🎉
+
+[![Contributors](https://contrib.rocks/image?repo=souma9830/SnapPass-AI)](https://github.com/souma9830/SnapPass-AI/graphs/contributors)
+
+Want to see your avatar here? Check out the [Contributing Guide](CONTRIBUTING.md) and submit a PR!
+
+---
 ## 📜 License
 
 This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
